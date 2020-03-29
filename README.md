@@ -1,7 +1,7 @@
 # ut-software-testing-project
 Spring 2020 Software Testing Group Project
 
-## Current Plant
+## Current Plan
 Our final goal is to have a package where we can generate a large number of JUnit tests to test an API. Those tests should be dynamically generated based off of the `/v3/api-docs/` endpoint on the API under test. The final product should be able to be pointed at any API that offers an OpenAPI schema at this endpoint to put it under test. As a first stage we can stand up the Testing package to test just a single API.
 
 ### Book API
@@ -54,4 +54,4 @@ The package will need to accept a base URL for the application, it will then cal
 4. POST /api/book            Expect 405 because POST isn't a valid method
 5. PUT  /api/book            Expect 405 because PUT isn't a valid method
 6. GET  /api/bookz           Expect 404 because this isn't a valid route
-etc.
+7. etc.
