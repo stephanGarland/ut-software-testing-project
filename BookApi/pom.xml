@@ -14,10 +14,6 @@
 	<name>BookApi</name>
 	<description>Test Spring Boot API</description>
 
-	<properties>
-		<java.version>1.8</java.version>
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -27,7 +23,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
@@ -71,11 +66,10 @@
 	</build>
 	
 	<repositories>
-    <repository>	<!-- Thisis for the spring-fox dependency -->
+    <repository>	<!-- This is for the spring-fox dependency -->
       <id>jcenter-snapshots</id>
       <name>jcenter</name>
       <url>https://jcenter.bintray.com/</url>
     </repository>
 	</repositories>
-
 </project>

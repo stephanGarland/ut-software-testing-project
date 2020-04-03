@@ -20,7 +20,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
  * This class creates the REST end-points for the Book API.
  */
 @CrossOrigin(origins = "*")
-@RestController
+@RestController 
 @RequestMapping("/api/book")
 public class BookController {
 	
@@ -28,6 +28,7 @@ public class BookController {
 	
 	@Autowired
 	public BookController(BookService service) {
+		System.out.println("Started BookController");
 		this.service = service;
 	}
 	
