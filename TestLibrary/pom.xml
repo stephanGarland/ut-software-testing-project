@@ -5,6 +5,10 @@
   <version>0.0.1-SNAPSHOT</version>
   <name>TestLibrary</name>
   <description>JUnit Testing Library to API Testing</description>
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -33,4 +37,15 @@
 	    <version>2.9.8</version>
 	</dependency>
   </dependencies>
+  
+<!--   <plugins> -->
+<!-- 	  <plugin> -->
+<!-- 	    <groupId>org.apache.maven.plugins</groupId> -->
+<!-- 	      <artifactId>maven-compiler-plugin</artifactId> -->
+<!-- 	      <configuration> -->
+<!-- 	        <source>1.6</source> -->
+<!-- 	        <target>1.6</target> -->
+<!-- 	      </configuration> -->
+<!-- 	  </plugin> -->
+<!--   </plugins> -->
 </project>

@@ -1,16 +1,15 @@
-import static org.junit.Assert.assertNotNull;
+package edu.utexas.ee360t.test.utility;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import edu.utexas.ee360t.test.dto.Api;
-import edu.utexas.ee360t.test.utility.OpenApiUtility;
 
 public class OpenApiTest {
 	
