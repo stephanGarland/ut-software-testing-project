@@ -1,6 +1,8 @@
+
 /.metadata/
 /BookApi/target/
 /TestLibrary/target/
 /BookApi/.settings/
 /TestLibrary/.settings/
 /.settings/
+.idea
