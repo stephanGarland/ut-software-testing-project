@@ -1,6 +1,7 @@
 package edu.utexas.ee360t.book.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -32,22 +33,22 @@ public class BookController {
 		this.service = service;
 	}
 	
-	@GetMapping
+	@GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Book> getBook(@RequestParam long id) {
 		return ResponseEntity.ok(service.getBook(id));
 	}
 	
-	@PostMapping
+	@PostMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Book> createBook(@Validated(Book.New.class) @RequestBody @org.springframework.web.bind.annotation.RequestBody Book book){
 		return ResponseEntity.ok(service.createBook(book));
 	}
 	
-	@PutMapping
+	@PutMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Book> updateBook(@Validated(Book.Existing.class) @RequestBody @org.springframework.web.bind.annotation.RequestBody Book book){
 		return ResponseEntity.ok(service.updateBook(book));
 	}
 	
-	@DeleteMapping
+	@DeleteMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Book> deleteBook(@RequestParam long id){
 		service.deleteBook(id);
 		return ResponseEntity.ok().build();
