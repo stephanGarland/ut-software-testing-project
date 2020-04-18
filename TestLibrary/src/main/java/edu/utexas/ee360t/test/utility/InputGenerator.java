@@ -1,6 +1,7 @@
 package edu.utexas.ee360t.test.utility;
 
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.util.Objects;
 import java.util.Random;
 import java.util.stream.DoubleStream;
@@ -41,11 +42,12 @@ public class InputGenerator {
 	 * This method accepts a Schema object and outputs a LongStream of random
 	 * invalid values for the parameter.
 	 * @param schema	The OpenAPI Schema for the parameter
-	 * @return	LongStream of valid long values
+	 * @return	LongStream of invalid long values
 	 */
 	public static LongStream generateInvalidIntegers(Schema<?> schema) {
-		//TODO: Create the logic to generate invalid Integers
-		return null;
+		// This is not guaranteed to return all invalid numbers, as presumably
+		// some of the returned values will be in the schema's range.
+		return new Random().longs(Long.MIN_VALUE, Long.MAX_VALUE);
 	}
 	
 	/**
@@ -55,8 +57,7 @@ public class InputGenerator {
 	 * @return	DoubleStream of valid double values
 	 */
 	public static DoubleStream generateValidDouble(Schema<?> schema) {
-		//TODO: Create the logic to generate valid Doubles
-		return null;
+		return new Random().doubles(minimum(schema), maximum(schema));
 	}
 	
 	/**
@@ -66,19 +67,25 @@ public class InputGenerator {
 	 * @return	DoubleStream of invalid double values
 	 */
 	public static DoubleStream generateInvalidDouble(Schema<?> schema) {
-		//TODO: Create the logic to generate invalid Doubles
-		return null;
+		return new Random().doubles(Double.MIN_VALUE, Double.MAX_VALUE);
 	}
 	
 	/**
-	 * This method accepts a Schema object and outputs a DoubleStream of random
+	 * This method accepts a Schema object and outputs a Stream of random
 	 * valid values for the parameter.
 	 * @param schema	The OpenAPI Schema for the parameter
 	 * @return	Stream of valid String values
 	 */
 	public static Stream<String> generateValidString(Schema<?> schema) {
-		//TODO: Create the logic to generate valid Strings
-		return null;
+		final String alphanumerics = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+		SecureRandom rand = new SecureRandom();
+		Stream.Builder<String> sb = Stream.builder();
+		Stream<String> stream = null;
+		for (int i = schema.getMinLength(); i <= schema.getMaxLength(); i++) {
+			String s = Character.toString(alphanumerics.charAt(rand.nextInt(alphanumerics.length())));
+			stream = sb.add(s).build();		
+		}
+		return stream;
 	}
 
 	private static long minimum(Schema<?> schema) {
