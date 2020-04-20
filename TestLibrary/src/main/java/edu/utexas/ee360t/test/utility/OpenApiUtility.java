@@ -24,10 +24,12 @@ public class OpenApiUtility {
 	 * @return
 	 */
 	public static OpenAPI retrieveApiSpecifications(String domain) throws JsonParseException, JsonMappingException, IOException {
-		
-		
-		
-		OpenAPI api = new OpenAPIV3Parser().read(domain + "/v3/api-docs");
-		return api;
+		try {
+			OpenAPI api = new OpenAPIV3Parser().read(domain + "/v3/api-docs");
+			return api;
+		} catch(NullPointerException e) {
+			throw new RuntimeException("Specified API Does not exist. Is it running?");
+		}
+
 	}
 }

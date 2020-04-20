@@ -6,11 +6,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
-//import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.springframework.http.HttpHeaders;
@@ -27,6 +27,8 @@ import edu.utexas.ee360t.test.dto.TestDefinition.Request;
 import edu.utexas.ee360t.test.utility.InputGenerator;
 import edu.utexas.ee360t.test.utility.OpenApiUtility;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.parameters.RequestBody;
 
 import static io.restassured.RestAssured.given;
@@ -74,7 +76,6 @@ public class TestGenerator {
 	            	.log().all();
 	        	}
 
-	        		
 	        	//TODO: Add Response Body checks
 	        	
 	        }));
@@ -90,8 +91,11 @@ public class TestGenerator {
 		OpenAPI api = OpenApiUtility.retrieveApiSpecifications("http://localhost:8080");
 		
 		tests.addAll(verifyNotAcceptableResponses(api));	
-		
+		tests.addAll(verifyNotFoundResponses(api));
 		tests.addAll(verifyUnsupportedMediaTypeResponses(api));
+		tests.addAll(verifyBadRequestResponses(api));
+		tests.addAll(verifyOkResponses(api));
+		tests.addAll(verifyMethodNotAllowedResponses(api));
 		
 		return tests;
 	} 
@@ -128,7 +132,6 @@ public class TestGenerator {
 	private List<TestDefinition> verifyUnsupportedMediaTypeResponses(OpenAPI api){
 		Set<MediaType> typeList = getMediaType();
 		
-		
 		List<TestDefinition> tests = new ArrayList<>();
 		api.getPaths().forEach((path, mapping) ->{
 			mapping.readOperationsMap().forEach((method, operation) ->{
@@ -141,7 +144,6 @@ public class TestGenerator {
 					});
 				} 
 				operation.getResponses().forEach((status, response) ->{
-
 					typeList.forEach(media -> {
  						Request req = new Request(path, HttpMethod.valueOf(method.toString()));
 						ExpectedResponse res = new ExpectedResponse(HttpStatus.UNSUPPORTED_MEDIA_TYPE, new HttpHeaders(), new HashMap<>());
@@ -159,6 +161,125 @@ public class TestGenerator {
 				});
 			});
 		});
+		return tests;
+	}
+	
+	private List<TestDefinition> verifyOkResponses(OpenAPI api){
+		
+		List<TestDefinition> tests = new ArrayList<>();
+		api.getPaths().forEach((path, mapping) ->{
+			Map<PathItem.HttpMethod, Operation> operations = mapping.readOperationsMap();
+
+			final Operation postOperation = operations.get(PathItem.HttpMethod.POST);
+			if(Objects.nonNull(postOperation)) {
+				for(int i = 0; i < 20; i++) {
+					postOperation.getResponses().forEach((status, response) ->{
+						response.getContent().forEach((contentType, definition) ->{
+							Request req = new Request(path, HttpMethod.POST);
+							ExpectedResponse res = new ExpectedResponse(HttpStatus.valueOf(Integer.parseInt(status)), new HttpHeaders(), new HashMap<>());
+							req.addHeader(HttpHeaders.ACCEPT, contentType);
+							req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
+							req.setBody(InputGenerator.generateValidObjectFromSchemaWithRef(api, definition.getSchema()));
+							if(Objects.nonNull(postOperation.getParameters())) {
+								postOperation.getParameters().forEach(parameter ->{
+									req.addParam(parameter.getName(), InputGenerator.generateValidInput(parameter.getSchema()));
+								});
+							}
+							TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
+							tests.add(testDef);
+						});
+					});
+				}
+
+			}
+			
+			final Operation getOperation = operations.get(PathItem.HttpMethod.GET);
+			if(Objects.nonNull(getOperation)) {
+				for(int i = 0; i < 5; i++) {
+					getOperation.getResponses().forEach((status, response) ->{
+						response.getContent().forEach((contentType, definition) ->{
+							Request req = new Request(path, HttpMethod.GET);
+							ExpectedResponse res = new ExpectedResponse(HttpStatus.valueOf(Integer.parseInt(status)), new HttpHeaders(), new HashMap<>());
+							req.addHeader(HttpHeaders.ACCEPT, contentType);
+							req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
+							req.setBody(InputGenerator.generateValidObjectFromSchemaWithRef(api, definition.getSchema()));
+							if(Objects.nonNull(getOperation.getParameters())) {
+								getOperation.getParameters().forEach(parameter ->{
+									if("id".equals(parameter.getName())) {
+										req.addParam(parameter.getName(), InputGenerator.generateId());
+									} else {
+										req.addParam(parameter.getName(), InputGenerator.generateValidInput(parameter.getSchema()));
+									}
+								});
+							}
+							TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
+							tests.add(testDef);
+						});
+					});
+				}
+			}
+				
+			final Operation putOperation = operations.get(PathItem.HttpMethod.PUT);
+			if(Objects.nonNull(putOperation)) {
+				for(int i = 0; i < 5; i++) {
+					putOperation.getResponses().forEach((status, response) ->{
+						response.getContent().forEach((contentType, definition) ->{
+							Request req = new Request(path, HttpMethod.PUT);
+							ExpectedResponse res = new ExpectedResponse(HttpStatus.valueOf(Integer.parseInt(status)), new HttpHeaders(), new HashMap<>());
+							req.addHeader(HttpHeaders.ACCEPT, contentType);
+							req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
+							req.setBody(InputGenerator.generateValidObjectFromSchemaWithRef(api, definition.getSchema()));
+							if(Objects.nonNull(putOperation.getParameters())) {
+								putOperation.getParameters().forEach(parameter ->{
+								if("id".equals(parameter.getName())) {
+									req.addParam(parameter.getName(), InputGenerator.generateId());
+								} else {
+									req.addParam(parameter.getName(), InputGenerator.generateValidInput(parameter.getSchema()));
+								}
+							});
+						}
+						TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
+						tests.add(testDef);
+					});
+				});
+			}
+		}
+		});
+		
+		//TODO: Create tests for DELETE cases
+		
+		//TODO: Create tests for PATCH cases
+		
+		//TODO: Create tests for other cases
+		
+		
+		return tests;
+	}
+	
+	private List<TestDefinition> verifyNotFoundResponses(OpenAPI api){
+		
+		List<TestDefinition> tests = new ArrayList<>();
+		
+		//TODO: Create tests for 404 Errors on paths that do not exist
+		
+		return tests;
+	}
+	
+	private List<TestDefinition> verifyBadRequestResponses(OpenAPI api){
+		
+		List<TestDefinition> tests = new ArrayList<>();
+		
+		//TODO: Create tests for 400 Errors by sending invalid response values
+		
+		return tests;
+	}
+	
+	private List<TestDefinition> verifyMethodNotAllowedResponses(OpenAPI api){
+		
+		List<TestDefinition> tests = new ArrayList<>();
+		
+		//TODO: Create tests for 405 Errors by sending invalid response values
+		
 		return tests;
 	}
 	
