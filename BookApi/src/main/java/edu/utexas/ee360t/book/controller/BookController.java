@@ -56,5 +56,10 @@ public class BookController {
 		service.deleteBook(id);
 		return ResponseEntity.ok().build();
 	}
+	
+	@GetMapping(value="/test" ,produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Book> getBookTest(@Min(0) @Max(Long.MAX_VALUE) @RequestParam long id, @RequestParam double d, @RequestParam float f) {
+		return ResponseEntity.ok(service.getBook(id));
+	}
 
 }

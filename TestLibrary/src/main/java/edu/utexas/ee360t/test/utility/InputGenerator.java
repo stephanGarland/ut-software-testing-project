@@ -15,9 +15,7 @@ import java.util.stream.Stream;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.Schema;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class InputGenerator {
 	
 	/**
@@ -31,7 +29,7 @@ public class InputGenerator {
 			switch(schema.getType()) {
 			case "integer":
 				return generateValidIntegers(schema).iterator().next();
-			case "double":
+			case "number":
 				return generateValidDouble(schema).iterator().next();
 			case "string":
 				return generateValidString(schema).iterator().next();
@@ -76,7 +74,7 @@ public class InputGenerator {
 	 * @return	LongStream of valid long values
 	 */
 	public static LongStream generateValidIntegers(Schema<?> schema) {
-		return new Random().longs(minimum(schema), maximum(schema));
+		return new Random().longs(minimumLong(schema), maximumLong(schema));
 	}
 	
 	/**
@@ -85,9 +83,33 @@ public class InputGenerator {
 	 * @param schema	The OpenAPI Schema for the parameter
 	 * @return	LongStream of invalid long values
 	 */
-	public static LongStream generateInvalidIntegers(Schema<?> schema) {
-		LongStream tooLow = new Random().longs(Long.MIN_VALUE, minimum(schema));
-		LongStream tooHigh = new Random().longs(maximum(schema), Long.MAX_VALUE);
+	public static LongStream generateInvalidIntegers(Schema<?> schema) throws AllValuesAreValidException {
+		Long min = minimumLong(schema);
+		Long max = maximumLong(schema);
+
+		switch(schema.getFormat()) {
+		case "int32":
+			if(min == Integer.MIN_VALUE) {
+				if(max == Integer.MAX_VALUE) {
+					throw new AllValuesAreValidException();
+				} else {
+					return new Random().longs(max, Integer.MAX_VALUE);
+				}
+			}
+		case "int64":
+		default:
+			if(min == Long.MIN_VALUE) {
+				if(max == Long.MAX_VALUE) {
+					throw new AllValuesAreValidException();
+				} else {
+					return new Random().longs(max, Long.MAX_VALUE);
+				}
+				
+			}
+		}
+		
+		LongStream tooLow = new Random().longs(Long.MIN_VALUE, minimumLong(schema));
+		LongStream tooHigh = new Random().longs(maximumLong(schema), Long.MAX_VALUE);
 		
 		return LongStream.concat(tooLow, tooHigh).unordered();
 	}
@@ -103,7 +125,7 @@ public class InputGenerator {
 	 * @return	DoubleStream of valid double values
 	 */
 	public static DoubleStream generateValidDouble(Schema<?> schema) {
-		return new Random().doubles(minimum(schema), maximum(schema));
+		return new Random().doubles(minimumLong(schema), maximumLong(schema));
 	}
 	
 	/**
@@ -113,9 +135,39 @@ public class InputGenerator {
 	 * @return	DoubleStream of invalid double values
 	 */
 	public static DoubleStream generateInvalidDouble(Schema<?> schema) {
-		DoubleStream tooLow = new Random().doubles(Double.MIN_VALUE, minimum(schema));
-		DoubleStream tooHigh = new Random().doubles(maximum(schema), Double.MAX_VALUE);
-		return DoubleStream.concat(tooLow, tooHigh);
+		Double min = minimumDouble(schema);
+		Double max = maximumDouble(schema);
+		
+		DoubleStream tooLow = null;
+		DoubleStream tooHigh = null;
+		switch(schema.getFormat()) {
+		case "float":
+			if(min == Float.MIN_VALUE) {
+				tooLow = new Random().doubles(Float.NaN, Float.NaN);
+			}
+			if(max == Float.MAX_VALUE) {
+				tooHigh = new Random().doubles(Float.NaN, Float.NaN);
+			}
+			break;
+		case "double":
+		default:
+			if(min == Double.MIN_VALUE) {
+				tooLow = new Random().doubles(Double.NaN, Double.NaN);
+			}
+			if(max == Double.MAX_VALUE) {
+				tooHigh = new Random().doubles(Double.NaN, Double.NaN);
+			}
+		}
+		
+		if(Objects.isNull(tooLow)) {
+			tooLow = new Random().doubles(Double.MIN_VALUE, min);
+		}
+		
+		if(Objects.isNull(tooHigh)) {
+			tooHigh = new Random().doubles(max, Double.MAX_VALUE);
+		}
+		
+		return DoubleStream.concat(tooLow, tooHigh).unordered();
 	}
 	
 	/**
@@ -163,10 +215,10 @@ public class InputGenerator {
 			}
 			sb.add(stream);
 		}	
-		return sb.build();
+		return null; //sb.build();
 	}
 
-	private static long minimum(Schema<?> schema) {
+	private static long minimumLong(Schema<?> schema) {
 		BigDecimal min = schema.getMinimum();
 		if(Objects.isNull(min)) {
 			if(Objects.nonNull(schema.getFormat())) {
@@ -186,7 +238,27 @@ public class InputGenerator {
 		}
 	}
 	
-	public static long maximum(Schema<?> schema) {
+	private static double minimumDouble(Schema<?> schema) {
+		BigDecimal min = schema.getMinimum();
+		if(Objects.isNull(min)) {
+			if(Objects.nonNull(schema.getFormat())) {
+				switch(schema.getFormat()) {
+				case "float":
+					return Float.MIN_VALUE;
+				case "double":
+				default:
+					return Double.MIN_VALUE;
+				}
+			} else {
+				throw new IllegalArgumentException();
+			}
+
+		} else {
+			return min.longValue();
+		}
+	}
+	
+	public static long maximumLong(Schema<?> schema) {
 		BigDecimal max = schema.getMaximum();
 		if(Objects.isNull(max)) {
 			switch(schema.getFormat()) {
@@ -195,6 +267,21 @@ public class InputGenerator {
 			case "int64":
 			default:
 				return Long.MAX_VALUE;
+			}
+		} else {
+			return max.longValue();
+		}
+	}
+	
+	public static double maximumDouble(Schema<?> schema) {
+		BigDecimal max = schema.getMaximum();
+		if(Objects.isNull(max)) {
+			switch(schema.getFormat()) {
+			case "float":
+				return Float.MAX_VALUE;
+			case "double":
+			default:
+				return Double.MAX_VALUE;
 			}
 		} else {
 			return max.longValue();
