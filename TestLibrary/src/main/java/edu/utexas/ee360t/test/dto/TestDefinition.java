@@ -55,7 +55,7 @@ public class TestDefinition {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(request.getMethod()).append(" ")
+		sb.append(request.getMethod().toString()).append(" ")
 		.append(request.getUrl());
 		
 		if(!request.getParams().isEmpty()) {
@@ -73,7 +73,9 @@ public class TestDefinition {
 		}
 		
 		sb.append(" ")
-		.append(" ").append(response.getStatus().toString());
+		.append(" ").append(response.getStatus().value());
+		
+		sb.append(" ").append("ct:").append(request.getHeaders().getContentType());
 		
 		return sb.toString();
 	}

@@ -1,10 +1,11 @@
 package edu.utexas.ee360t.book.model;
 
+import java.io.Serializable;
 
 /**
  * This BaseEntity contains common values useful for entities.
  */
-public class BaseEntity {
+public class BaseEntity implements Serializable {
 	
 	private static final long serialVersionUID = 6508683964501915140L;
 	

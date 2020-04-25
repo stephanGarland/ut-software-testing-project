@@ -1,5 +1,8 @@
 package edu.utexas.ee360t.book.controller;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -33,8 +36,8 @@ public class BookController {
 		this.service = service;
 	}
 	
-	@GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Book> getBook(@RequestParam long id) {
+	@GetMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Book> getBook(@Min(0) @Max(Long.MAX_VALUE) @RequestParam long id) {
 		return ResponseEntity.ok(service.getBook(id));
 	}
 	
@@ -48,10 +51,15 @@ public class BookController {
 		return ResponseEntity.ok(service.updateBook(book));
 	}
 	
-	@DeleteMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Book> deleteBook(@RequestParam long id){
+	@DeleteMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Book> deleteBook(@Min(0) @Max(Long.MAX_VALUE) @RequestParam long id){
 		service.deleteBook(id);
 		return ResponseEntity.ok().build();
+	}
+	
+	@GetMapping(value="/test" ,produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Book> getBookTest(@Min(0) @Max(Long.MAX_VALUE) @RequestParam long id, @RequestParam double d, @RequestParam float f) {
+		return ResponseEntity.ok(service.getBook(id));
 	}
 
 }

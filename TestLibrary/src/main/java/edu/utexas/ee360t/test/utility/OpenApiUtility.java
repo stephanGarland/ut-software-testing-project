@@ -1,25 +1,35 @@
 package edu.utexas.ee360t.test.utility;
 
 import java.io.IOException;
-import java.net.URL;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import edu.utexas.ee360t.test.dto.Api;
+
+/**
+ * Utility class for retrieving and parsing OpenAPI Specifications.
+ */
+import io.swagger.v3.parser.OpenAPIV3Parser;
+import io.swagger.v3.oas.models.OpenAPI;
+
 
 /**
  * Utility class for retrieving and parsing OpenAPI Specifications.
  */
 public class OpenApiUtility {
-	
+
 	/**
 	 * This method accepts a domain and returns an object representing the API 
 	 * @throws IOException 
 	 * @throws JsonMappingException 
-	 * @throws JsonParseException 
+	 * @throws JsonParseException
+	 * @return
 	 */
-	public static Api retrieveApiSpecifications(URL domain) throws JsonParseException, JsonMappingException, IOException {
-		//TODO: Parse OpenAPI Specification into Api
-		Api api = new Api();
-		return api;
+	public static OpenAPI retrieveApiSpecifications(String domain) throws JsonParseException, JsonMappingException, IOException {
+		try {
+			OpenAPI api = new OpenAPIV3Parser().read(domain + "/v3/api-docs");
+			return api;
+		} catch(NullPointerException e) {
+			throw new RuntimeException("Specified API Does not exist. Is it running?");
+		}
+
 	}
 }
