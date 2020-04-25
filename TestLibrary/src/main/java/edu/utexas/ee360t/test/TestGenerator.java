@@ -11,8 +11,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import io.swagger.v3.oas.models.Paths;
-import io.swagger.v3.oas.models.media.Schema;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.springframework.http.HttpHeaders;
@@ -32,6 +30,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.parameters.RequestBody;
+import io.swagger.v3.oas.models.media.Schema;
 
 import static io.restassured.RestAssured.given;
 
@@ -261,8 +260,6 @@ Stream<DynamicTest> dynamicTests() {
 	private List<TestDefinition> verifyNotFoundResponses(OpenAPI api){
 		
 		List<TestDefinition> tests = new ArrayList<>();
-
-		//TODO: Create tests for 404 Errors on paths that do not exist
 
 		api.getPaths().forEach((path, mapping) ->{
 			Map<PathItem.HttpMethod, Operation> operations = mapping.readOperationsMap();
