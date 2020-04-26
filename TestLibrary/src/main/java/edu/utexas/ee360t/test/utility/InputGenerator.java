@@ -115,7 +115,7 @@ public class InputGenerator {
 	}
 	
 	public static long generateId() {
-		return new Random().longs(1, 10).iterator().next();
+		return new Random().longs(1, 9).iterator().next();
 	}
 	
 	/**

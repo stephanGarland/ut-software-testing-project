@@ -4,6 +4,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
 
 import org.springframework.core.annotation.Order;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,12 @@ import edu.utexas.ee360t.book.dto.ErrorDto;
 @ControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     
+   @ExceptionHandler(EmptyResultDataAccessException.class)
+   protected ResponseEntity<ErrorDto> handleEntityNotFound(EmptyResultDataAccessException ex) {
+	   ErrorDto e = new ErrorDto(HttpStatus.NO_CONTENT, ex.getMessage());
+	   return ResponseEntity.status(HttpStatus.NO_CONTENT).body(e);
+   }
+   
    @ExceptionHandler(EntityNotFoundException.class)
    protected ResponseEntity<ErrorDto> handleEntityNotFound(EntityNotFoundException ex) {
 	   ErrorDto e = new ErrorDto(HttpStatus.NO_CONTENT, ex.getMessage());
