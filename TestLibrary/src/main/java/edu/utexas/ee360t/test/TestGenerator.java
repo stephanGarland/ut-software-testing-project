@@ -244,63 +244,11 @@ public class TestGenerator {
 				});
 			}
 		}
-
-		final Operation deleteOperation = operations.get(PathItem.HttpMethod.DELETE);
-		if (Objects.nonNull(deleteOperation)) {
-			for (int i = 0; i < 5; i++) {
-				deleteOperation.getResponses().forEach((status, response) -> {
-					response.getContent().forEach((contentType, definition) -> {
-						Request req = new Request(path, HttpMethod.DELETE);
-						ExpectedResponse res = new ExpectedResponse(HttpStatus.valueOf(Integer.parseInt(status)),
-								new HttpHeaders(), new HashMap<>());
-						req.addHeader(HttpHeaders.ACCEPT, contentType);
-						req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
-						req.setBody(InputGenerator.generateValidObjectFromSchemaWithRef(api, definition.getSchema()));
-						if (Objects.nonNull(deleteOperation.getParameters())) {
-							deleteOperation.getParameters().forEach(parameter -> {
-								if ("id".equals(parameter.getName())) {
-									req.addParam(parameter.getName(), InputGenerator.generateId());
-								} else {
-									req.addParam(parameter.getName(),
-											InputGenerator.generateValidInput(parameter.getSchema()));
-								}
-							});
-						}
-						TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
-						tests.add(testDef);
-					});
-				});
-			}
-		}
-
-		final Operation patchOperation = operations.get(PathItem.HttpMethod.PATCH);
-		if (Objects.nonNull(patchOperation)) {
-			for (int i = 0; i < 5; i++) {
-				patchOperation.getResponses().forEach((status, response) -> {
-					response.getContent().forEach((contentType, definition) -> {
-						Request req = new Request(path, HttpMethod.PATCH);
-						ExpectedResponse res = new ExpectedResponse(HttpStatus.valueOf(Integer.parseInt(status)),
-								new HttpHeaders(), new HashMap<>());
-						req.addHeader(HttpHeaders.ACCEPT, contentType);
-						req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
-						req.setBody(InputGenerator.generateValidObjectFromSchemaWithRef(api, definition.getSchema()));
-						if (Objects.nonNull(patchOperation.getParameters())) {
-							patchOperation.getParameters().forEach(parameter -> {
-								if ("id".equals(parameter.getName())) {
-									req.addParam(parameter.getName(), InputGenerator.generateId());
-								} else {
-									req.addParam(parameter.getName(),
-											InputGenerator.generateValidInput(parameter.getSchema()));
-								}
-							});
-						}
-						TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
-						tests.add(testDef);
-					});
-				});
-			}
-		}
 		});
+		
+		//TODO: Create tests for DELETE cases
+		
+		//TODO: Create tests for PATCH cases
 		
 		//TODO: Create tests for other cases
 		
