@@ -313,22 +313,79 @@ Stream<DynamicTest> dynamicTests() {
 				}
 			}
 
-			final Operation putOperation = operations.get(PathItem.HttpMethod.PUT);
-			if(Objects.nonNull(putOperation)) {
+			final Operation deleteOperation = operations.get(PathItem.HttpMethod.DELETE);
+			if(Objects.nonNull(deleteOperation)) {
 				for(int i = 0; i < 5; i++) {
-					putOperation.getResponses().forEach((status, response) ->{
+					deleteOperation.getResponses().forEach((status, response) ->{
 						response.getContent().forEach((contentType, definition) ->{
-							Request req = new Request(path + "/404", HttpMethod.PUT);
+							Request req = new Request(path + "/404", HttpMethod.DELETE);
 							ExpectedResponse res = new ExpectedResponse(HttpStatus.NOT_FOUND, new HttpHeaders(), new HashMap<>());
 							req.addHeader(HttpHeaders.ACCEPT, contentType);
 							req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
 							req.setBody(InputGenerator.generateValidObjectFromSchemaWithRef(api, definition.getSchema()));
-							if(Objects.nonNull(putOperation.getParameters())) {
-								putOperation.getParameters().forEach(parameter ->{
+							if(Objects.nonNull(deleteOperation.getParameters())) {
+								deleteOperation.getParameters().forEach(parameter ->{
 									if("id".equals(parameter.getName())) {
 										req.addParam(parameter.getName(), InputGenerator.generateId());
 									} else {
 										req.addParam(parameter.getName(), InputGenerator.generateValidInput(parameter.getSchema()));
+									}
+								});
+							}
+							TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
+							tests.add(testDef);
+						});
+					});
+				}
+			}
+
+			final Operation patchOperation = operations.get(PathItem.HttpMethod.PATCH);
+			if (Objects.nonNull(patchOperation)) {
+				for (int i = 0; i < 5; i++) {
+					patchOperation.getResponses().forEach((status, response) -> {
+						response.getContent().forEach((contentType, definition) -> {
+							Request req = new Request(path + "/404", HttpMethod.PATCH);
+							ExpectedResponse res = new ExpectedResponse(HttpStatus.NOT_FOUND, new HttpHeaders(), new HashMap<>());
+							req.addHeader(HttpHeaders.ACCEPT, contentType);
+							req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
+							req.setBody(
+									InputGenerator.generateValidObjectFromSchemaWithRef(api, definition.getSchema()));
+							if (Objects.nonNull(patchOperation.getParameters())) {
+								patchOperation.getParameters().forEach(parameter -> {
+									if ("id".equals(parameter.getName())) {
+										req.addParam(parameter.getName(), InputGenerator.generateId());
+									} else {
+										req.addParam(parameter.getName(),
+												InputGenerator.generateValidInput(parameter.getSchema()));
+									}
+								});
+							}
+							TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
+							tests.add(testDef);
+						});
+					});
+				}
+			}
+
+			final Operation putOperation = operations.get(PathItem.HttpMethod.PUT);
+			if (Objects.nonNull(putOperation)) {
+				for (int i = 0; i < 5; i++) {
+					putOperation.getResponses().forEach((status, response) -> {
+						response.getContent().forEach((contentType, definition) -> {
+							Request req = new Request(path + "/404", HttpMethod.PUT);
+							ExpectedResponse res = new ExpectedResponse(HttpStatus.NOT_FOUND, new HttpHeaders(),
+									new HashMap<>());
+							req.addHeader(HttpHeaders.ACCEPT, contentType);
+							req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
+							req.setBody(
+									InputGenerator.generateValidObjectFromSchemaWithRef(api, definition.getSchema()));
+							if (Objects.nonNull(putOperation.getParameters())) {
+								putOperation.getParameters().forEach(parameter -> {
+									if ("id".equals(parameter.getName())) {
+										req.addParam(parameter.getName(), InputGenerator.generateId());
+									} else {
+										req.addParam(parameter.getName(),
+												InputGenerator.generateValidInput(parameter.getSchema()));
 									}
 								});
 							}
