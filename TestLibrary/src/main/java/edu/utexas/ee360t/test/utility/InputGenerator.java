@@ -13,6 +13,10 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.RandomUtils;
+
+import com.google.common.base.Strings;
+
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.Schema;
 
@@ -27,12 +31,23 @@ public class InputGenerator {
 	public static Object generateValidInput(Schema<?> schema) {
 		if(Objects.nonNull(schema.getType())) {
 			switch(schema.getType()) {
+			case "boolean":
+				return RandomUtils.nextInt(0, 2) != 0;
 			case "integer":
 				return generateValidIntegers(schema).iterator().next();
 			case "number":
 				return generateValidDouble(schema).iterator().next();
 			case "string":
-				return generateValidString(schema).iterator().next();
+				if(Objects.isNull(schema.getFormat())) {
+					return generateValidString(schema).iterator().next();
+				} else {
+					switch(schema.getFormat()) {
+						case "byte":
+						default:
+							return generateValidBytes(schema).iterator().next();						
+					}
+				}
+				
 			case "object":
 			default:
 				throw new IllegalArgumentException(schema.getType());
@@ -71,10 +86,20 @@ public class InputGenerator {
 	 * This method accepts a Schema object and outputs a LongStream of random
 	 * valid values for the parameter.
 	 * @param schema	The OpenAPI Schema for the parameter
+	 * @return	LongStream of valid byte values
+	 */
+	public static LongStream generateValidBytes(Schema<?> schema) {
+		return new Random().longs(minimumInteger(schema), maximumInteger(schema));
+	}
+	
+	/**
+	 * This method accepts a Schema object and outputs a LongStream of random
+	 * valid values for the parameter.
+	 * @param schema	The OpenAPI Schema for the parameter
 	 * @return	LongStream of valid long values
 	 */
 	public static LongStream generateValidIntegers(Schema<?> schema) {
-		return new Random().longs(minimumLong(schema), maximumLong(schema));
+		return new Random().longs(minimumInteger(schema), maximumInteger(schema));
 	}
 	
 	/**
@@ -84,8 +109,8 @@ public class InputGenerator {
 	 * @return	LongStream of invalid long values
 	 */
 	public static LongStream generateInvalidIntegers(Schema<?> schema) throws AllValuesAreValidException {
-		Long min = minimumLong(schema);
-		Long max = maximumLong(schema);
+		Long min = minimumInteger(schema);
+		Long max = maximumInteger(schema);
 
 		switch(schema.getFormat()) {
 		case "int32":
@@ -108,8 +133,8 @@ public class InputGenerator {
 			}
 		}
 		
-		LongStream tooLow = new Random().longs(Long.MIN_VALUE, minimumLong(schema));
-		LongStream tooHigh = new Random().longs(maximumLong(schema), Long.MAX_VALUE);
+		LongStream tooLow = new Random().longs(Long.MIN_VALUE, minimumInteger(schema));
+		LongStream tooHigh = new Random().longs(maximumInteger(schema), Long.MAX_VALUE);
 		
 		return LongStream.concat(tooLow, tooHigh).unordered();
 	}
@@ -125,7 +150,7 @@ public class InputGenerator {
 	 * @return	DoubleStream of valid double values
 	 */
 	public static DoubleStream generateValidDouble(Schema<?> schema) {
-		return new Random().doubles(minimumLong(schema), maximumLong(schema));
+		return new Random().doubles(minimumInteger(schema), maximumInteger(schema));
 	}
 	
 	/**
@@ -181,7 +206,20 @@ public class InputGenerator {
 		SecureRandom rand = new SecureRandom();
 		Stream.Builder<String> sb = Stream.builder();
 		
-		IntStream intStream = new Random().ints(schema.getMinLength(), schema.getMaxLength());
+		int min, max;
+		if(Objects.isNull(schema.getMinLength())){
+			min = 0;
+		} else {
+			min = schema.getMinLength();
+		}
+		
+		if(Objects.isNull(schema.getMaxLength())){
+			max = Short.MAX_VALUE;
+		} else {
+			max = schema.getMaxLength();
+		}
+		
+		IntStream intStream = new Random().ints(min, max);
 		Iterator<Integer> ints = intStream.iterator();
 		for(int j = 0; j <= 10; j++) {
 			String stream = "";
@@ -218,11 +256,13 @@ public class InputGenerator {
 		return null; //sb.build();
 	}
 
-	private static long minimumLong(Schema<?> schema) {
+	private static long minimumInteger(Schema<?> schema) {
 		BigDecimal min = schema.getMinimum();
 		if(Objects.isNull(min)) {
 			if(Objects.nonNull(schema.getFormat())) {
 				switch(schema.getFormat()) {
+				case "byte":
+					return Byte.MIN_VALUE;
 				case "int32":
 					return Integer.MIN_VALUE;
 				case "int64":
@@ -258,10 +298,12 @@ public class InputGenerator {
 		}
 	}
 	
-	public static long maximumLong(Schema<?> schema) {
+	public static long maximumInteger(Schema<?> schema) {
 		BigDecimal max = schema.getMaximum();
 		if(Objects.isNull(max)) {
 			switch(schema.getFormat()) {
+			case "byte":
+				return Byte.MAX_VALUE;
 			case "int32":
 				return Integer.MAX_VALUE;
 			case "int64":

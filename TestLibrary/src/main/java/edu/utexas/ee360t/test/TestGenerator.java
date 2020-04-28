@@ -104,13 +104,15 @@ public class TestGenerator {
 				operation.getResponses().forEach((status, response) -> {
 					Content content = response.getContent();
 					if(Objects.nonNull(content)) {
+						if(content.containsKey("*/*")) {
+							return;
+						}
 						content.forEach((c, mediaType) -> {
 							typeList.remove(MediaType.valueOf(c));
 						});
 						typeList.forEach(media -> {
 							Request req = new Request(path, HttpMethod.valueOf(method.toString()));
-							ExpectedResponse res = new ExpectedResponse(HttpStatus.NOT_ACCEPTABLE, new HttpHeaders(),
-									new HashMap<>());
+							ExpectedResponse res = new ExpectedResponse(HttpStatus.NOT_ACCEPTABLE, new HttpHeaders(),new HashMap<>());
 							req.addHeader(HttpHeaders.ACCEPT, media.toString());
 							req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
 							TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
@@ -206,8 +208,10 @@ public class TestGenerator {
 										new HttpHeaders(), new HashMap<>());
 								req.addHeader(HttpHeaders.ACCEPT, contentType);
 								req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
-								req.setBody(
-										InputGenerator.generateValidObjectFromSchemaWithRef(api, definition.getSchema()));
+								if(Objects.nonNull(definition.getSchema().get$ref())) {
+									req.setBody(InputGenerator.generateValidObjectFromSchemaWithRef(api, definition.getSchema()));
+								}
+								
 								if (Objects.nonNull(getOperation.getParameters())) {
 
 									getOperation.getParameters().forEach(parameter -> {
