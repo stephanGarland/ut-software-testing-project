@@ -42,11 +42,12 @@ public class TestGenerator {
 		try {
 			tests = retrieveTestDefinitions();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			tests = new ArrayList<>();
 		}
 
+		//TODO: Externalize http://localhost:8080 into properties file so we can switch it more easily
+		
 		Stream<DynamicTest> testStream = tests.parallelStream()
 				.map(test -> DynamicTest.dynamicTest(test.toString(), () -> {
 					if (test.getRequest().getBody().isEmpty()) {
@@ -64,9 +65,6 @@ public class TestGenerator {
 								.then().headers(test.getResponse().getHeaders())
 								.statusCode(test.getResponse().getStatus().value()).log().all();
 					}
-
-					// TODO: Add Response Body checks
-
 				}));
 
 		return testStream;
