@@ -247,10 +247,6 @@ Stream<DynamicTest> dynamicTests() {
 		}
 		});
 		
-		//TODO: Create tests for DELETE cases
-		
-		//TODO: Create tests for PATCH cases
-		
 		//TODO: Create tests for other cases
 		
 		
