@@ -202,16 +202,32 @@ public class TestGenerator {
 					getOperation.getResponses().forEach((status, response) -> {
 						HttpStatus s = HttpStatus.valueOf(Integer.valueOf(status));
 						if(HttpStatus.OK.equals(s)) {
-							response.getContent().forEach((contentType, definition) -> {
-								Request req = new Request(path, HttpMethod.GET);
-								ExpectedResponse res = new ExpectedResponse(HttpStatus.valueOf(Integer.parseInt(status)),
-										new HttpHeaders(), new HashMap<>());
-								req.addHeader(HttpHeaders.ACCEPT, contentType);
-								req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
-								if(Objects.nonNull(definition.getSchema().get$ref())) {
-									req.setBody(InputGenerator.generateValidObjectFromSchemaWithRef(api, definition.getSchema()));
-								}
-								
+							Request req = new Request(path, HttpMethod.GET);
+							ExpectedResponse res = new ExpectedResponse(HttpStatus.valueOf(Integer.parseInt(status)), new HttpHeaders(), new HashMap<>());							
+							if(Objects.nonNull(response.getContent())) {
+								response.getContent().forEach((contentType, definition) -> {
+									req.addHeader(HttpHeaders.ACCEPT, contentType);
+									req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
+									if(Objects.nonNull(definition.getSchema().get$ref())) {
+										req.setBody(InputGenerator.generateValidObjectFromSchemaWithRef(api, definition.getSchema()));
+									}
+									
+									if (Objects.nonNull(getOperation.getParameters())) {
+
+										getOperation.getParameters().forEach(parameter -> {
+											if ("id".equals(parameter.getName())) {
+												req.addParam(parameter.getName(), id);
+											} else {
+												req.addParam(parameter.getName(),
+														InputGenerator.generateValidInput(parameter.getSchema()));
+											}
+										});
+									}
+									
+									TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
+									tests.add(testDef);
+								});
+							} else {
 								if (Objects.nonNull(getOperation.getParameters())) {
 
 									getOperation.getParameters().forEach(parameter -> {
@@ -222,10 +238,13 @@ public class TestGenerator {
 													InputGenerator.generateValidInput(parameter.getSchema()));
 										}
 									});
-								}
-								TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
-								tests.add(testDef);
-							});
+								
+									TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
+									tests.add(testDef);
+								}								
+							}
+//							TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
+//							tests.add(testDef);
 						} else if(HttpStatus.NO_CONTENT.equals(s)) {
 							Request req = new Request(path, HttpMethod.GET);
 							ExpectedResponse res = new ExpectedResponse(HttpStatus.valueOf(Integer.parseInt(status)), new HttpHeaders(), new HashMap<>());
@@ -387,10 +406,48 @@ public class TestGenerator {
 	private List<TestDefinition> verifyNotFoundResponses(OpenAPI api) {
 
 		List<TestDefinition> tests = new ArrayList<>();
-
-		// TODO: Create tests for 404 Errors on paths that do not exist
+		api.getPaths().forEach((path, mapping) ->{
+			Map<PathItem.HttpMethod, Operation> operations = mapping.readOperationsMap();
+			
+			for(int i = 0; i <= 20; i++) {
+				operations.forEach((method, operation)->{
+					operation.getResponses().forEach((status, response) ->{
+						if(Objects.nonNull(response.getContent())) {
+							response.getContent().forEach((contentType, definition) ->{
+								String s = InputGenerator.generateValidString();
+								Request req = new Request("/" + s, method);
+								ExpectedResponse res = new ExpectedResponse(HttpStatus.NOT_FOUND, new HttpHeaders(), new HashMap<>());
+								req.addHeader(HttpHeaders.ACCEPT, contentType);
+								req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
+								req.setBody(InputGenerator.generateValidObjectFromSchemaWithRef(api, definition.getSchema()));
+								if(Objects.nonNull(operation.getParameters())) {
+									operation.getParameters().forEach(parameter ->{
+										req.addParam(parameter.getName(), InputGenerator.generateValidInput(parameter.getSchema()));
+									});
+								}
+								TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
+								tests.add(testDef);
+							});						
+						} else {
+							String s = InputGenerator.generateValidString();
+							Request req = new Request("/" + s , method);
+							ExpectedResponse res = new ExpectedResponse(HttpStatus.NOT_FOUND, new HttpHeaders(), new HashMap<>());
+							req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
+							if(Objects.nonNull(operation.getParameters())) {
+								operation.getParameters().forEach(parameter ->{
+									req.addParam(parameter.getName(), InputGenerator.generateValidInput(parameter.getSchema()));
+								});
+							}
+							TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
+							tests.add(testDef);
+						}
+					});				
+				});
+			}
+		});				
 
 		return tests;
+
 	}
 
 	private List<TestDefinition> verifyBadRequestResponses(OpenAPI api) {
@@ -402,13 +459,42 @@ public class TestGenerator {
 		return tests;
 	}
 
-	private List<TestDefinition> verifyMethodNotAllowedResponses(OpenAPI api) {
-
+	private List<TestDefinition> verifyMethodNotAllowedResponses(OpenAPI api){
+		// head, patch, trace
 		List<TestDefinition> tests = new ArrayList<>();
 
-		// TODO: Create tests for 405 Errors by sending invalid response values
+		api.getPaths().forEach((path, mapping) ->{
+			Map<PathItem.HttpMethod, Operation> operations = mapping.readOperationsMap();
+			
+			Set<PathItem.HttpMethod> methods = getMethods();
 
+			operations.forEach((method, operation)->{
+				methods.remove(method);
+			});
+			
+			methods.forEach(method ->{
+				Request req = new Request(path, method);
+				ExpectedResponse res = new ExpectedResponse(HttpStatus.METHOD_NOT_ALLOWED, new HttpHeaders(), new HashMap<>());
+				req.addHeader(HttpHeaders.ACCEPT, "application/json");
+				req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
+				TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
+				tests.add(testDef);					
+			});
+		});
+		
 		return tests;
+	}
+	
+	private Set<PathItem.HttpMethod> getMethods() {
+		Set<PathItem.HttpMethod> methods = new HashSet<>();
+		methods.add(PathItem.HttpMethod.GET);
+		methods.add(PathItem.HttpMethod.POST);
+		methods.add(PathItem.HttpMethod.PUT);
+		methods.add(PathItem.HttpMethod.PATCH);
+		methods.add(PathItem.HttpMethod.TRACE);
+		methods.add(PathItem.HttpMethod.DELETE);
+		
+		return methods;
 	}
 
 	private Set<MediaType> getMediaType() {

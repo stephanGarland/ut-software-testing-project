@@ -15,8 +15,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.RandomUtils;
 
-import com.google.common.base.Strings;
-
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.Schema;
 
@@ -254,6 +252,24 @@ public class InputGenerator {
 			sb.add(stream);
 		}	
 		return null; //sb.build();
+	}
+	
+	/**
+	 * This method accepts a Schema object and outputs a Stream of random
+	 * invalid values for the parameter.
+	 * @param schema	The OpenAPI Schema for the parameter
+	 * @return	Stream of valid String values
+	 */
+	public static String generateValidString() {
+		final String alphanumerics = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+		SecureRandom rand = new SecureRandom();
+		
+		String stream = "";
+		for (int i = 0; i <= new Random().nextInt(300); i++) {
+			String s = Character.toString(alphanumerics.charAt(rand.nextInt(alphanumerics.length())));
+			stream = stream + s;		
+		}
+		return stream;
 	}
 
 	private static long minimumInteger(Schema<?> schema) {

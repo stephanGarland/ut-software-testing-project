@@ -2,6 +2,7 @@ package edu.utexas.ee360t.book.controller;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.Size;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -44,7 +45,7 @@ public class BookController {
 		@ApiResponse(responseCode = "200", description = "Success")
 	})
 	@GetMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Book> getBook(@Min(0) @Max(Long.MAX_VALUE) @RequestParam long id, @RequestParam double d, @RequestParam float f, @RequestParam String s) {
+	public ResponseEntity<Book> getBook(@Min(0) @Max(Long.MAX_VALUE) @RequestParam long id) {
 		return ResponseEntity.ok(service.getBook(id));
 	}
 	
@@ -71,5 +72,9 @@ public class BookController {
 		service.deleteBook(id);
 		return ResponseEntity.ok().build();
 	}
-
+	
+	@GetMapping("test")
+	public ResponseEntity<Void> get(@RequestParam double d, @RequestParam float f, @RequestParam String s, @Size(max = 1) @RequestParam Character c) {
+		return ResponseEntity.ok().build();
+	}
 }
