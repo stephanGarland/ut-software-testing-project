@@ -395,9 +395,7 @@ public class TestGenerator {
 							tests.add(testDef);
 						}
 					});
-				}
-				
-				//TODO: Create tests for other cases (potentially)
+				}				
 			}
 		});	
 		return tests;
@@ -419,7 +417,9 @@ public class TestGenerator {
 								ExpectedResponse res = new ExpectedResponse(HttpStatus.NOT_FOUND, new HttpHeaders(), new HashMap<>());
 								req.addHeader(HttpHeaders.ACCEPT, contentType);
 								req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
-								req.setBody(InputGenerator.generateValidObjectFromSchemaWithRef(api, definition.getSchema()));
+								if(Objects.nonNull(definition.getSchema().get$ref())) {
+									req.setBody(InputGenerator.generateValidObjectFromSchemaWithRef(api, definition.getSchema()));
+								}
 								if(Objects.nonNull(operation.getParameters())) {
 									operation.getParameters().forEach(parameter ->{
 										req.addParam(parameter.getName(), InputGenerator.generateValidInput(parameter.getSchema()));
@@ -497,6 +497,7 @@ public class TestGenerator {
 		return methods;
 	}
 
+	@SuppressWarnings("deprecation")
 	private Set<MediaType> getMediaType() {
 		Set<MediaType> typeList = new HashSet<>();
 		typeList.add(MediaType.APPLICATION_XML);
