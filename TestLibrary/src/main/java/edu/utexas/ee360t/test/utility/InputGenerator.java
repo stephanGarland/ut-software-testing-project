@@ -11,8 +11,6 @@ import java.util.Random;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
-import java.util.stream.Stream;
-
 import org.apache.commons.lang3.RandomUtils;
 
 import io.swagger.v3.oas.models.OpenAPI;
@@ -37,7 +35,7 @@ public class InputGenerator {
 				return generateValidDouble(schema).iterator().next();
 			case "string":
 				if(Objects.isNull(schema.getFormat())) {
-					return generateValidString(schema).iterator().next();
+					return generateValidString(schema);
 				} else {
 					switch(schema.getFormat()) {
 						case "byte":
@@ -199,10 +197,9 @@ public class InputGenerator {
 	 * @param schema	The OpenAPI Schema for the parameter
 	 * @return	Stream of valid String values
 	 */
-	public static Stream<String> generateValidString(Schema<?> schema) {
+	public static String generateValidString(Schema<?> schema) {
 		final String alphanumerics = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 		SecureRandom rand = new SecureRandom();
-		Stream.Builder<String> sb = Stream.builder();
 		
 		int min, max;
 		if(Objects.isNull(schema.getMinLength())){
@@ -219,15 +216,12 @@ public class InputGenerator {
 		
 		IntStream intStream = new Random().ints(min, max);
 		Iterator<Integer> ints = intStream.iterator();
-		for(int j = 0; j <= 10; j++) {
-			String stream = "";
-			for (int i = 0; i <= (int) ints.next(); i++) {
+		String stream = "";
+		for (int i = 0; i <= (int) ints.next(); i++) {
 			String s = Character.toString(alphanumerics.charAt(rand.nextInt(alphanumerics.length())));
 			stream = stream + s;		
-			}
-			sb.add(stream);
-		}	
-		return sb.build();
+		}
+		return stream;
 	}
 	
 	/**
@@ -236,22 +230,18 @@ public class InputGenerator {
 	 * @param schema	The OpenAPI Schema for the parameter
 	 * @return	Stream of valid String values
 	 */
-	public static Stream<String> generateInvalidString(Schema<?> schema) {
+	public static String generateInvalidString(Schema<?> schema) {
 		final String alphanumerics = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 		SecureRandom rand = new SecureRandom();
-		Stream.Builder<String> sb = Stream.builder();
-		//TODO: Replace this logic with logic to generate strings that are too long or short
-		IntStream intStream = new Random().ints(schema.getMinLength(), schema.getMaxLength());
-		Iterator<Integer> ints = intStream.iterator();
-		for(int j = 0; j <= 10; j++) {
-			String stream = "";
-			for (int i = 0; i <= (int) ints.next(); i++) {
+		IntStream intStream = new Random().ints(schema.getMaxLength(), Short.MAX_VALUE);//Technically Java supports MAX_INT
+		Iterator<Integer> ints = intStream.iterator();									//But that would be a 4GB String	
+		String stream = "";																//Limiting tests to MAX_SHORT for sanity
+		for (int i = 0; i <= (int) ints.next(); i++) {
 			String s = Character.toString(alphanumerics.charAt(rand.nextInt(alphanumerics.length())));
 			stream = stream + s;		
-			}
-			sb.add(stream);
-		}	
-		return null; //sb.build();
+		}
+
+		return stream;
 	}
 	
 	/**
