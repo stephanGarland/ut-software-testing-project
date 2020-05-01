@@ -169,7 +169,7 @@ public class TestGenerator {
 		api.getPaths().forEach((path, mapping) -> {
 			Map<PathItem.HttpMethod, Operation> operations = mapping.readOperationsMap();
 
-			int count = 10;
+			int count = 20;
 			
 			for (int i = 0; i < count; i++) {
 				final Integer id = Integer.valueOf(i + 1);
@@ -243,8 +243,6 @@ public class TestGenerator {
 									tests.add(testDef);
 								}								
 							}
-//							TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
-//							tests.add(testDef);
 						} else if(HttpStatus.NO_CONTENT.equals(s)) {
 							Request req = new Request(path, HttpMethod.GET);
 							ExpectedResponse res = new ExpectedResponse(HttpStatus.valueOf(Integer.parseInt(status)), new HttpHeaders(), new HashMap<>());
@@ -404,47 +402,20 @@ public class TestGenerator {
 	private List<TestDefinition> verifyNotFoundResponses(OpenAPI api) {
 
 		List<TestDefinition> tests = new ArrayList<>();
-		api.getPaths().forEach((path, mapping) ->{
-			Map<PathItem.HttpMethod, Operation> operations = mapping.readOperationsMap();
-			
-			for(int i = 0; i <= 20; i++) {
-				operations.forEach((method, operation)->{
-					operation.getResponses().forEach((status, response) ->{
-						if(Objects.nonNull(response.getContent())) {
-							response.getContent().forEach((contentType, definition) ->{
-								String s = InputGenerator.generateValidString();
-								Request req = new Request("/" + s, method);
-								ExpectedResponse res = new ExpectedResponse(HttpStatus.NOT_FOUND, new HttpHeaders(), new HashMap<>());
-								req.addHeader(HttpHeaders.ACCEPT, contentType);
-								req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
-								if(Objects.nonNull(definition.getSchema().get$ref())) {
-									req.setBody(InputGenerator.generateValidObjectFromSchemaWithRef(api, definition.getSchema()));
-								}
-								if(Objects.nonNull(operation.getParameters())) {
-									operation.getParameters().forEach(parameter ->{
-										req.addParam(parameter.getName(), InputGenerator.generateValidInput(parameter.getSchema()));
-									});
-								}
-								TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
-								tests.add(testDef);
-							});						
-						} else {
-							String s = InputGenerator.generateValidString();
-							Request req = new Request("/" + s , method);
-							ExpectedResponse res = new ExpectedResponse(HttpStatus.NOT_FOUND, new HttpHeaders(), new HashMap<>());
-							req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
-							if(Objects.nonNull(operation.getParameters())) {
-								operation.getParameters().forEach(parameter ->{
-									req.addParam(parameter.getName(), InputGenerator.generateValidInput(parameter.getSchema()));
-								});
-							}
-							TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
-							tests.add(testDef);
-						}
-					});				
-				});
+		
+		//Removing TRACE because it returns 405 for unmapped routes
+		Set<PathItem.HttpMethod> methods = getMethods();
+		methods.remove(PathItem.HttpMethod.TRACE);
+		
+		methods.forEach(method ->{
+			for(int i = 0; i < 20; i++) {
+			String s = InputGenerator.generateValidString();
+			Request req = new Request("/" + s, method);
+			ExpectedResponse res = new ExpectedResponse(HttpStatus.NOT_FOUND, new HttpHeaders(), new HashMap<>());
+			TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
+			tests.add(testDef);
 			}
-		});				
+		});			
 
 		return tests;
 
@@ -467,6 +438,8 @@ public class TestGenerator {
 			Map<PathItem.HttpMethod, Operation> operations = mapping.readOperationsMap();
 			
 			Set<PathItem.HttpMethod> methods = getMethods();
+			methods.remove(PathItem.HttpMethod.HEAD);
+			methods.remove(PathItem.HttpMethod.OPTIONS);
 
 			operations.forEach((method, operation)->{
 				methods.remove(method);
@@ -493,6 +466,8 @@ public class TestGenerator {
 		methods.add(PathItem.HttpMethod.PATCH);
 		methods.add(PathItem.HttpMethod.TRACE);
 		methods.add(PathItem.HttpMethod.DELETE);
+		methods.add(PathItem.HttpMethod.HEAD);
+		methods.add(PathItem.HttpMethod.OPTIONS);
 		
 		return methods;
 	}
