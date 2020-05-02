@@ -5,10 +5,10 @@ Spring 2020 Software Testing Group Project
 Dynamically generates a large number of JUnit tests to test an API. Those tests are dynamically generated based off of the `/v3/api-docs/` endpoint on the API under test. The final product should be able to be pointed at any API that offers an OpenAPI schema at this endpoint to put it under test.
 
 ## Book API
-A basic API for CRUD operations on a simple Book database table. This API is located within the `ut-software-testing-project\BookApi\` folder. It exposes OpenAPI 3.0 specifications through it's `/v3/api-docs/` endpoint.
+A basic API for CRUD operations on a simple Book database table. This API is located within the `ut-software-testing-project/BookApi/` folder. It exposes OpenAPI 3.0 specifications through it's `/v3/api-docs/` endpoint.
 
 ## Math API
-A basic API for simple math operations. This API is located within the `ut-software-testing-project\MathApi\` folder. It exposes OpenAPI 3.0 specifications through it's `/v3/api-docs/` endpoint.
+A basic API for simple math operations. This API is located within the `ut-software-testing-project/MathApi/` folder. It exposes OpenAPI 3.0 specifications through it's `/v3/api-docs/` endpoint.
 
 ### Testing Framework
 - JUnit 5
