@@ -35,6 +35,11 @@ public class TestDefinition {
 			this.url = url;
 		}
 		
+		public Request(String url, io.swagger.v3.oas.models.PathItem.HttpMethod method) {
+			this.method = HttpMethod.valueOf(method.toString());
+			this.url = url;
+		}
+		
 		public void addParam(String key, Object value) {
 			params.put(key, value);
 		}

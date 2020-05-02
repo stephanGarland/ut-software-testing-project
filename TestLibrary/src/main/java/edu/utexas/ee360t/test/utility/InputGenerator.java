@@ -11,7 +11,7 @@ import java.util.Random;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
-import java.util.stream.Stream;
+import org.apache.commons.lang3.RandomUtils;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.Schema;
@@ -27,12 +27,23 @@ public class InputGenerator {
 	public static Object generateValidInput(Schema<?> schema) {
 		if(Objects.nonNull(schema.getType())) {
 			switch(schema.getType()) {
+			case "boolean":
+				return RandomUtils.nextInt(0, 2) != 0;
 			case "integer":
 				return generateValidIntegers(schema).iterator().next();
 			case "number":
 				return generateValidDouble(schema).iterator().next();
 			case "string":
-				return generateValidString(schema).iterator().next();
+				if(Objects.isNull(schema.getFormat())) {
+					return generateValidString(schema);
+				} else {
+					switch(schema.getFormat()) {
+						case "byte":
+						default:
+							return generateValidBytes(schema).iterator().next();						
+					}
+				}
+				
 			case "object":
 			default:
 				throw new IllegalArgumentException(schema.getType());
@@ -71,10 +82,20 @@ public class InputGenerator {
 	 * This method accepts a Schema object and outputs a LongStream of random
 	 * valid values for the parameter.
 	 * @param schema	The OpenAPI Schema for the parameter
+	 * @return	LongStream of valid byte values
+	 */
+	public static LongStream generateValidBytes(Schema<?> schema) {
+		return new Random().longs(minimumInteger(schema), maximumInteger(schema));
+	}
+	
+	/**
+	 * This method accepts a Schema object and outputs a LongStream of random
+	 * valid values for the parameter.
+	 * @param schema	The OpenAPI Schema for the parameter
 	 * @return	LongStream of valid long values
 	 */
 	public static LongStream generateValidIntegers(Schema<?> schema) {
-		return new Random().longs(minimumLong(schema), maximumLong(schema));
+		return new Random().longs(minimumInteger(schema), maximumInteger(schema));
 	}
 	
 	/**
@@ -84,8 +105,8 @@ public class InputGenerator {
 	 * @return	LongStream of invalid long values
 	 */
 	public static LongStream generateInvalidIntegers(Schema<?> schema) throws AllValuesAreValidException {
-		Long min = minimumLong(schema);
-		Long max = maximumLong(schema);
+		Long min = minimumInteger(schema);
+		Long max = maximumInteger(schema);
 
 		switch(schema.getFormat()) {
 		case "int32":
@@ -108,14 +129,14 @@ public class InputGenerator {
 			}
 		}
 		
-		LongStream tooLow = new Random().longs(Long.MIN_VALUE, minimumLong(schema));
-		LongStream tooHigh = new Random().longs(maximumLong(schema), Long.MAX_VALUE);
+		LongStream tooLow = new Random().longs(Long.MIN_VALUE, minimumInteger(schema));
+		LongStream tooHigh = new Random().longs(maximumInteger(schema), Long.MAX_VALUE);
 		
 		return LongStream.concat(tooLow, tooHigh).unordered();
 	}
 	
 	public static long generateId() {
-		return new Random().longs(1, 10).iterator().next();
+		return new Random().longs(1, 9).iterator().next();
 	}
 	
 	/**
@@ -125,7 +146,7 @@ public class InputGenerator {
 	 * @return	DoubleStream of valid double values
 	 */
 	public static DoubleStream generateValidDouble(Schema<?> schema) {
-		return new Random().doubles(minimumLong(schema), maximumLong(schema));
+		return new Random().doubles(minimumInteger(schema), maximumInteger(schema));
 	}
 	
 	/**
@@ -176,22 +197,31 @@ public class InputGenerator {
 	 * @param schema	The OpenAPI Schema for the parameter
 	 * @return	Stream of valid String values
 	 */
-	public static Stream<String> generateValidString(Schema<?> schema) {
+	public static String generateValidString(Schema<?> schema) {
 		final String alphanumerics = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 		SecureRandom rand = new SecureRandom();
-		Stream.Builder<String> sb = Stream.builder();
 		
-		IntStream intStream = new Random().ints(schema.getMinLength(), schema.getMaxLength());
+		int min, max;
+		if(Objects.isNull(schema.getMinLength())){
+			min = 0;
+		} else {
+			min = schema.getMinLength();
+		}
+		
+		if(Objects.isNull(schema.getMaxLength())){
+			max = Short.MAX_VALUE;
+		} else {
+			max = schema.getMaxLength();
+		}
+		
+		IntStream intStream = new Random().ints(min, max);
 		Iterator<Integer> ints = intStream.iterator();
-		for(int j = 0; j <= 10; j++) {
-			String stream = "";
-			for (int i = 0; i <= (int) ints.next(); i++) {
+		String stream = "";
+		for (int i = 0; i <= (int) ints.next(); i++) {
 			String s = Character.toString(alphanumerics.charAt(rand.nextInt(alphanumerics.length())));
 			stream = stream + s;		
-			}
-			sb.add(stream);
-		}	
-		return sb.build();
+		}
+		return stream;
 	}
 	
 	/**
@@ -200,29 +230,45 @@ public class InputGenerator {
 	 * @param schema	The OpenAPI Schema for the parameter
 	 * @return	Stream of valid String values
 	 */
-	public static Stream<String> generateInvalidString(Schema<?> schema) {
+	public static String generateInvalidString(Schema<?> schema) {
 		final String alphanumerics = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 		SecureRandom rand = new SecureRandom();
-		Stream.Builder<String> sb = Stream.builder();
-		//TODO: Replace this logic with logic to generate strings that are too long or short
-		IntStream intStream = new Random().ints(schema.getMinLength(), schema.getMaxLength());
-		Iterator<Integer> ints = intStream.iterator();
-		for(int j = 0; j <= 10; j++) {
-			String stream = "";
-			for (int i = 0; i <= (int) ints.next(); i++) {
+		IntStream intStream = new Random().ints(schema.getMaxLength(), Short.MAX_VALUE);//Technically Java supports MAX_INT
+		Iterator<Integer> ints = intStream.iterator();									//But that would be a 4GB String	
+		String stream = "";																//Limiting tests to MAX_SHORT for sanity
+		for (int i = 0; i <= (int) ints.next(); i++) {
 			String s = Character.toString(alphanumerics.charAt(rand.nextInt(alphanumerics.length())));
 			stream = stream + s;		
-			}
-			sb.add(stream);
-		}	
-		return null; //sb.build();
+		}
+
+		return stream;
+	}
+	
+	/**
+	 * This method accepts a Schema object and outputs a Stream of random
+	 * invalid values for the parameter.
+	 * @param schema	The OpenAPI Schema for the parameter
+	 * @return	Stream of valid String values
+	 */
+	public static String generateValidString() {
+		final String alphanumerics = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+		SecureRandom rand = new SecureRandom();
+		
+		String stream = "";
+		for (int i = 0; i <= new Random().nextInt(300); i++) {
+			String s = Character.toString(alphanumerics.charAt(rand.nextInt(alphanumerics.length())));
+			stream = stream + s;		
+		}
+		return stream;
 	}
 
-	private static long minimumLong(Schema<?> schema) {
+	private static long minimumInteger(Schema<?> schema) {
 		BigDecimal min = schema.getMinimum();
 		if(Objects.isNull(min)) {
 			if(Objects.nonNull(schema.getFormat())) {
 				switch(schema.getFormat()) {
+				case "byte":
+					return Byte.MIN_VALUE;
 				case "int32":
 					return Integer.MIN_VALUE;
 				case "int64":
@@ -258,10 +304,12 @@ public class InputGenerator {
 		}
 	}
 	
-	public static long maximumLong(Schema<?> schema) {
+	public static long maximumInteger(Schema<?> schema) {
 		BigDecimal max = schema.getMaximum();
 		if(Objects.isNull(max)) {
 			switch(schema.getFormat()) {
+			case "byte":
+				return Byte.MAX_VALUE;
 			case "int32":
 				return Integer.MAX_VALUE;
 			case "int64":
