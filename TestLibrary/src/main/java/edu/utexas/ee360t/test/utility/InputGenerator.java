@@ -250,12 +250,12 @@ public class InputGenerator {
 	 * @param schema	The OpenAPI Schema for the parameter
 	 * @return	Stream of valid String values
 	 */
-	public static String generateValidString() {
+	public static String generateValidString(int len) {
 		final String alphanumerics = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 		SecureRandom rand = new SecureRandom();
 		
 		String stream = "";
-		for (int i = 0; i <= new Random().nextInt(300); i++) {
+		for (int i = 0; i <= len; i++) {
 			String s = Character.toString(alphanumerics.charAt(rand.nextInt(alphanumerics.length())));
 			stream = stream + s;		
 		}

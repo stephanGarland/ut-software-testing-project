@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -85,6 +86,7 @@ public class TestGenerator {
 		tests.addAll(verifyNotFoundResponses(api));
 		tests.addAll(verifyUnsupportedMediaTypeResponses(api));
 		tests.addAll(verifyBadRequestResponses(api));
+		tests.addAll(verifyUriTooLongResponses(api));
 		tests.addAll(verifyOkResponses(api));
 		tests.addAll(verifyMethodNotAllowedResponses(api));
 
@@ -409,7 +411,7 @@ public class TestGenerator {
 		
 		methods.forEach(method ->{
 			for(int i = 0; i < 20; i++) {
-			String s = InputGenerator.generateValidString();
+			String s = InputGenerator.generateValidString(new Random().nextInt(300));
 			Request req = new Request("/" + s, method);
 			ExpectedResponse res = new ExpectedResponse(HttpStatus.NOT_FOUND, new HttpHeaders(), new HashMap<>());
 			TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
@@ -422,10 +424,62 @@ public class TestGenerator {
 	}
 
 	private List<TestDefinition> verifyBadRequestResponses(OpenAPI api) {
-
 		List<TestDefinition> tests = new ArrayList<>();
 
-		// TODO: Create tests for 400 Errors by sending invalid response values
+		api.getPaths().forEach((path, mapping) ->{
+			Map<PathItem.HttpMethod, Operation> operations = mapping.readOperationsMap();
+
+			Set<PathItem.HttpMethod> methods = getMethods();
+			methods.remove(PathItem.HttpMethod.HEAD);
+			methods.remove(PathItem.HttpMethod.OPTIONS);
+
+			operations.forEach((method, operation)->{
+				methods.remove(method);
+			});
+
+			methods.forEach(method ->{
+				// This is the only way I could find to generate a 400, and even then, it isn't guaranteed
+				Request req = new Request(path + "/%", method);
+				ExpectedResponse res = new ExpectedResponse(HttpStatus.BAD_REQUEST, new HttpHeaders(), new HashMap<>());
+				req.addHeader(HttpHeaders.ACCEPT, "application/json");
+				req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
+				TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
+				tests.add(testDef);
+			});
+		});
+
+		return tests;
+	}
+
+	private List<TestDefinition> verifyUriTooLongResponses(OpenAPI api) {
+		List<TestDefinition> tests = new ArrayList<>();
+
+		api.getPaths().forEach((path, mapping) ->{
+			Map<PathItem.HttpMethod, Operation> operations = mapping.readOperationsMap();
+
+			Set<PathItem.HttpMethod> methods = getMethods();
+			methods.remove(PathItem.HttpMethod.HEAD);
+			methods.remove(PathItem.HttpMethod.OPTIONS);
+
+			operations.forEach((method, operation)->{
+				methods.remove(method);
+			});
+
+			methods.forEach(method ->{
+				/*  In testing, servers seem to accept up to 2^16 - 16 characters in the URI
+					which is hilariously long. You could, for example, submit
+					Jonathan Swift's _A Modest Proposal_ (40008 chars) as the URI, and be
+					comfortably under this limit. Anyway, 2^16 should guarantee a failure.
+				 */
+				String s = InputGenerator.generateValidString(65536);
+				Request req = new Request("/" + s, method);
+				ExpectedResponse res = new ExpectedResponse(HttpStatus.URI_TOO_LONG, new HttpHeaders(), new HashMap<>());
+				req.addHeader(HttpHeaders.ACCEPT, "application/json");
+				req.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
+				TestDefinition testDef = TestDefinition.builder().request(req).response(res).build();
+				tests.add(testDef);
+			});
+		});
 
 		return tests;
 	}
